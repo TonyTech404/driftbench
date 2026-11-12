@@ -44,6 +44,20 @@ def cmd_run(args: argparse.Namespace) -> int:
     )
 
 
+def cmd_agent(args: argparse.Namespace) -> int:
+    from .agent import SETUPS, run_agents
+
+    return run_agents(
+        questions_path=Path(args.questions),
+        results_path=Path(args.out),
+        setups=args.setups.split(",") if args.setups else list(SETUPS),
+        model=args.model,
+        only=set(args.only.split(",")) if args.only else None,
+        variants=tuple(args.variants.split(",")),
+        pause_s=args.pause,
+    )
+
+
 def cmd_relabel(args: argparse.Namespace) -> int:
     from .run import relabel
 
@@ -79,6 +93,18 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--only", help="comma-separated question ids")
     r.add_argument("--runs", type=int, default=1)
     r.set_defaults(func=cmd_run)
+
+    a = sub.add_parser(
+        "agent", help="give a coding agent (Claude Code) each tool and label the code it writes"
+    )
+    a.add_argument("--questions", required=True)
+    a.add_argument("--out", default="results/agent.jsonl")
+    a.add_argument("--setups", help="comma-separated: none,context7,deepwiki,exa (default: all)")
+    a.add_argument("--model", default="sonnet", help="model passed to claude --model")
+    a.add_argument("--only", help="comma-separated question ids")
+    a.add_argument("--variants", default="plain", help="plain, versioned, or both comma-separated")
+    a.add_argument("--pause", type=float, default=2.0, help="seconds between runs")
+    a.set_defaults(func=cmd_agent)
 
     rl = sub.add_parser("relabel", help="recompute labels from saved raw output")
     rl.add_argument("--questions", required=True)
