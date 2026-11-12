@@ -1,0 +1,14 @@
+[
+  {"repo": "pydantic/pydantic", "name": "Pydantic", "ecosystem": "python"},
+  {"repo": "fastapi/fastapi", "name": "FastAPI", "ecosystem": "python"},
+  {"repo": "langchain-ai/langchain", "name": "LangChain", "ecosystem": "python"},
+  {"repo": "pola-rs/polars", "name": "Polars", "ecosystem": "python"},
+  {"repo": "huggingface/transformers", "name": "Transformers", "ecosystem": "python"},
+  {"repo": "openai/openai-python", "name": "OpenAI Python SDK", "ecosystem": "python"},
+  {"repo": "vercel/next.js", "name": "Next.js", "ecosystem": "js"},
+  {"repo": "vercel/ai", "name": "Vercel AI SDK", "ecosystem": "js"},
+  {"repo": "honojs/hono", "name": "Hono", "ecosystem": "js"},
+  {"repo": "TanStack/query", "name": "TanStack Query", "ecosystem": "js"},
+  {"repo": "drizzle-team/drizzle-orm", "name": "Drizzle ORM", "ecosystem": "js"},
+  {"repo": "microsoft/playwright", "name": "Playwright", "ecosystem": "js"}
+]
