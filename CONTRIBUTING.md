@@ -1,6 +1,10 @@
 # Contributing
 
-Thanks for helping. The most useful contributions are new questions and new tools.
+Thanks for helping. The most useful contributions are new questions and new tools. Issues
+labeled [good first issue](https://github.com/TonyTech404/driftbench/labels/good%20first%20issue)
+are a good place to start.
+
+Everyone taking part is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Setup
 
@@ -68,6 +72,7 @@ adapter sends and how it reads the service's documented response, and add the to
 
 ## Disputing a result
 
-If you think a label is wrong, open an issue with the question id, the tool, and what the tool
-returned. Raw output isn't committed, so you can regenerate it with
+If you think a label is wrong, open a
+[Dispute a result](https://github.com/TonyTech404/driftbench/issues/new?template=dispute-result.yml)
+issue with the question id, the tool, and what the tool returned. Raw output isn't committed, so you can regenerate it with
 `driftbench run --only <id> --tools <tool>`. Tool vendors are welcome to respond, too.
