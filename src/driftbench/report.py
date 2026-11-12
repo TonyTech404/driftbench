@@ -48,13 +48,20 @@ def build_report(questions_path: Path, results_path: Path) -> str:
         "",
     ]
 
+    # Agent rows record their tool calls, so their tables also show how often the tool was used.
+    agent_mode = any("tool_calls" in (r.get("meta") or {}) for r in rows)
     variants = (("plain", "Question without a version"), ("versioned", "Question names the version"))
     for variant, title in variants:
+        if not any(r["variant"] == variant for r in rows):
+            continue
+        columns = ["Tool", "Current", "Mixed", "Stale", "Neither", "Errors", "First snippet stale"]
+        columns += ["Used its tool"] if agent_mode else []
+        columns += ["Median latency"]
         lines += [
             f"## {title}",
             "",
-            "| Tool | Current | Mixed | Stale | Neither | Errors | First snippet stale | Median latency |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- |",
+            "| " + " | ".join(columns) + " |",
+            "|" + " --- |" * len(columns),
         ]
         for t in tools:
             rs = [r for r in rows if r["tool"] == t and r["variant"] == variant]
@@ -62,10 +69,17 @@ def build_report(questions_path: Path, results_path: Path) -> str:
             first_stale = sum(r.get("first_label") == STALE for r in rs)
             ok = [r["ms"] for r in rs if r["label"] != ERROR]
             med = f"{statistics.median(ok) / 1000:.1f} s" if ok else "–"
+            used = ""
+            if agent_mode:
+                if t == "agent-none":
+                    used = " – |"
+                else:
+                    n = sum(bool((r.get("meta") or {}).get("tool_calls")) for r in rs)
+                    used = f" {_pct(n, len(rs))} |"
             lines.append(
                 f"| {t} | {_pct(c[CURRENT], len(rs))} | {_pct(c[MIXED], len(rs))} | "
                 f"{_pct(c[STALE], len(rs))} | {_pct(c[NEITHER], len(rs))} | {c[ERROR]} | "
-                f"{_pct(first_stale, len(rs))} | {med} |"
+                f"{_pct(first_stale, len(rs))} |{used} {med} |"
             )
         lines.append("")
 
