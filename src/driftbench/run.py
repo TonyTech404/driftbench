@@ -26,6 +26,15 @@ def raw_path(results_path: Path, question_id: str, tool: str, variant: str, run:
     return results_path.parent / "raw" / f"{question_id}.{tool}.{variant}.{run}.txt"
 
 
+def write_raw(path: Path, text: str) -> None:
+    """Save a tool's output byte for byte; web pages often contain \\r, which text mode would alter."""
+    path.write_bytes(text.encode())
+
+
+def read_raw(path: Path) -> str:
+    return path.read_bytes().decode()
+
+
 def digest(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()[:16]
 
@@ -85,7 +94,7 @@ def run(
                         if (q.id, tool.name, variant, i) in done:
                             continue
                         resp = tool.ask(q, q.text(variant), variant)
-                        raw_path(results_path, q.id, tool.name, variant, i).write_text(resp.text)
+                        write_raw(raw_path(results_path, q.id, tool.name, variant, i), resp.text)
                         row = {
                             "question_id": q.id,
                             "tool": tool.name,
@@ -123,7 +132,7 @@ def relabel(questions_path: Path, results_path: Path) -> int:
         if not raw.exists():
             skipped += 1
             continue
-        text = raw.read_text()
+        text = read_raw(raw)
         if digest(text) != r["sha256_16"]:
             print(f"raw output changed since the run, skipping {raw.name}", file=sys.stderr)
             skipped += 1

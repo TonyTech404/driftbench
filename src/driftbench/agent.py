@@ -22,7 +22,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from .questions import Question, load_questions
-from .run import digest, done_keys, label_fields, raw_path
+from .run import digest, done_keys, label_fields, raw_path, write_raw
 
 # MCP servers an agent can be given. All of them work without a key at low volume.
 SETUPS: dict[str, dict | None] = {
@@ -173,7 +173,7 @@ def run_agents(
                             file=sys.stderr,
                         )
                         return 3
-                    raw_path(results_path, q.id, tool, variant, 1).write_text(res.text)
+                    write_raw(raw_path(results_path, q.id, tool, variant, 1), res.text)
                     row = _row(q, tool, variant, res)
                     out.write(json.dumps(row) + "\n")
                     out.flush()

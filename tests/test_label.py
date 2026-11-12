@@ -66,3 +66,13 @@ def test_deprecation_note_inside_code_block_does_not_count():
 def test_plain_old_usage_inside_code_still_counts():
     text = "```ts\nconst app = new Hono()\napp.mount('/x', h)\n```"
     assert label_response(Q, text).code.label == STALE
+
+
+def test_raw_output_round_trips_carriage_returns(tmp_path):
+    from driftbench.run import digest, read_raw, write_raw
+
+    text = "line one\r\nline two\rend"
+    path = tmp_path / "raw.txt"
+    write_raw(path, text)
+    assert read_raw(path) == text
+    assert digest(read_raw(path)) == digest(text)
