@@ -56,16 +56,23 @@ def test_vitepress_removed_marker_does_not_count():
     assert label_response(Q, text).code.label == CURRENT
 
 
-def test_deprecation_note_inside_code_block_does_not_count():
+def test_deprecation_note_inside_code_block_counts_only_the_replacement():
     text = "```\napp.mount(path, handler) - Deprecated, use mount() from hono/mount.\n```"
     labs = label_response(Q, text)
-    assert labs.code.label == NEITHER
+    assert labs.code.label == CURRENT
     assert labs.text.label == MIXED
+    note = "```\napp.mount(path, handler) - Deprecated.\n```"
+    assert label_response(Q, note).code.label == NEITHER
 
 
 def test_plain_old_usage_inside_code_still_counts():
     text = "```ts\nconst app = new Hono()\napp.mount('/x', h)\n```"
     assert label_response(Q, text).code.label == STALE
+
+
+def test_deprecation_note_line_still_counts_the_new_api():
+    text = "```ts\nmount(h) // app.mount() is deprecated\n```"
+    assert label_response(Q, text).code.label == CURRENT
 
 
 def test_raw_output_round_trips_carriage_returns(tmp_path):

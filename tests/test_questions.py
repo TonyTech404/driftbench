@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from driftbench.label import CURRENT, MIXED, NEITHER, STALE, label_text
+from driftbench.label import CURRENT, MIXED, NEITHER, STALE, label_response, label_text
 from driftbench.questions import load_questions
 
 QUESTIONS = load_questions(Path(__file__).parent.parent / "data/questions/2026-11.json")
@@ -124,6 +124,13 @@ def test_patterns_separate_old_from_new(q):
     assert label_text(q, new).label == CURRENT, label_text(q, new)
     assert label_text(q, old + "\n" + new).label == MIXED
     assert label_text(q, "unrelated text").label == NEITHER
+
+
+def test_inline_deprecation_comment_keeps_the_current_api():
+    # From a real agent answer: the line recommends nodejs and only mentions edge as deprecated.
+    q = next(q for q in QUESTIONS if q.id == "nextjs-edge-runtime")
+    text = "```ts\nexport const runtime = 'nodejs' // or 'edge' (deprecated)\n```"
+    assert label_response(q, text).code.label == CURRENT
 
 
 @pytest.mark.parametrize("q", QUESTIONS, ids=lambda q: q.id)

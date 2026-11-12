@@ -70,8 +70,13 @@ def code_blocks(text: str) -> list[str]:
     return blocks or _INLINE.findall(text)
 
 
-def recommended_code(text: str) -> list[str]:
-    """Code blocks minus the lines that show what to stop using."""
+def recommended_code(q: Question, text: str) -> list[str]:
+    """Code blocks without what they tell the reader to stop using.
+
+    Removed diff lines are dropped. On a line that calls something deprecated, removed or
+    replaced, only the old API is blanked out: `runtime = 'nodejs' // or 'edge' (deprecated)`
+    still recommends the new API.
+    """
     fenced = list(_FENCE.finditer(text))
     raw = [(m.group(2).strip().lower(), m.group(3)) for m in fenced] or [
         ("", s) for s in _INLINE.findall(text)
@@ -83,15 +88,18 @@ def recommended_code(text: str) -> list[str]:
         for line in body.splitlines():
             if is_diff and line.startswith("-"):
                 continue
+            if is_diff and line.startswith("+"):
+                line = line[1:]
             if _REMOVAL_NOTE.search(line):
-                continue
-            kept.append(line[1:] if is_diff and line.startswith("+") else line)
+                for p in q._old:
+                    line = p.sub("", line)
+            kept.append(line)
         blocks.append("\n".join(kept))
     return blocks
 
 
 def label_response(q: Question, text: str) -> Labels:
-    blocks = recommended_code(text)
+    blocks = recommended_code(q, text)
     first = next(
         (lab for b in blocks if (lab := label_text(q, b)).label != NEITHER),
         Label(NEITHER, (), ()),
