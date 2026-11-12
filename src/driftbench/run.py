@@ -107,3 +107,35 @@ def run(
                         )
                         time.sleep(PAUSE_S)
     return 0
+
+
+def relabel(questions_path: Path, results_path: Path) -> int:
+    """Recompute labels from saved raw output, so labeling fixes don't need new tool calls."""
+    questions = {q.id: q for q in load_questions(questions_path)}
+    rows, changed, skipped = [], 0, 0
+    for line in results_path.read_text().splitlines():
+        r = json.loads(line)
+        rows.append(r)
+        q = questions.get(r["question_id"])
+        if q is None or r["label"] == ERROR:
+            continue
+        raw = _raw_path(results_path, r["question_id"], r["tool"], r["variant"], r["run"])
+        if not raw.exists():
+            skipped += 1
+            continue
+        text = raw.read_text()
+        if _digest(text) != r["sha256_16"]:
+            print(f"raw output changed since the run, skipping {raw.name}", file=sys.stderr)
+            skipped += 1
+            continue
+        new = _label_fields(q, text, None)
+        if any(r.get(k) != v for k, v in new.items()):
+            changed += 1
+            print(
+                f"{r['question_id']:36} {r['tool']:9} {r['variant']:9} {r['label']} -> {new['label']}",
+                file=sys.stderr,
+            )
+            r.update(new)
+    results_path.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    print(f"{changed} rows changed, {skipped} skipped (no matching raw output)", file=sys.stderr)
+    return 0

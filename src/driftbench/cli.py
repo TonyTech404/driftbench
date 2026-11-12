@@ -44,6 +44,12 @@ def cmd_run(args: argparse.Namespace) -> int:
     )
 
 
+def cmd_relabel(args: argparse.Namespace) -> int:
+    from .run import relabel
+
+    return relabel(Path(args.questions), Path(args.results))
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     from .report import build_report
 
@@ -73,6 +79,11 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--only", help="comma-separated question ids")
     r.add_argument("--runs", type=int, default=1)
     r.set_defaults(func=cmd_run)
+
+    rl = sub.add_parser("relabel", help="recompute labels from saved raw output")
+    rl.add_argument("--questions", required=True)
+    rl.add_argument("--results", default="results/results.jsonl")
+    rl.set_defaults(func=cmd_relabel)
 
     rep = sub.add_parser("report", help="summarize results as a Markdown report")
     rep.add_argument("--questions", required=True)
