@@ -7,6 +7,10 @@ Three views of one response:
 - first: the first code block that shows either API, which is the one an agent most likely uses.
 - text:  the whole response, for reference.
 If a response has no fenced code, the code and first views fall back to inline code spans.
+
+Code that tells the reader to stop using the old API doesn't count as recommending it, so the
+code and first views drop: removed lines in diff blocks (`- old()`), lines marked `[!code --]`
+(VitePress diffs), and lines that call the API deprecated, removed or replaced.
 """
 
 from __future__ import annotations
@@ -26,6 +30,11 @@ LABELS = (CURRENT, MIXED, STALE, NEITHER, ERROR)
 
 _FENCE = re.compile(r"^[ \t]*(`{3,}|~{3,})([^\n]*)\n(.*?)^[ \t]*\1[ \t]*$", re.M | re.S)
 _INLINE = re.compile(r"`([^`\n]+)`")
+_REMOVAL_NOTE = re.compile(
+    r"deprecat|\bremoved\b|\bno longer\b|\bobsolete\b|\binstead\b|in favou?r of|replaced (?:by|with)|"
+    r"\[!code --\]",
+    re.I,
+)
 
 
 @dataclass(frozen=True)
@@ -61,8 +70,28 @@ def code_blocks(text: str) -> list[str]:
     return blocks or _INLINE.findall(text)
 
 
+def recommended_code(text: str) -> list[str]:
+    """Code blocks minus the lines that show what to stop using."""
+    fenced = list(_FENCE.finditer(text))
+    raw = [(m.group(2).strip().lower(), m.group(3)) for m in fenced] or [
+        ("", s) for s in _INLINE.findall(text)
+    ]
+    blocks = []
+    for info, body in raw:
+        is_diff = info.startswith("diff")
+        kept = []
+        for line in body.splitlines():
+            if is_diff and line.startswith("-"):
+                continue
+            if _REMOVAL_NOTE.search(line):
+                continue
+            kept.append(line[1:] if is_diff and line.startswith("+") else line)
+        blocks.append("\n".join(kept))
+    return blocks
+
+
 def label_response(q: Question, text: str) -> Labels:
-    blocks = code_blocks(text)
+    blocks = recommended_code(text)
     first = next(
         (lab for b in blocks if (lab := label_text(q, b)).label != NEITHER),
         Label(NEITHER, (), ()),
