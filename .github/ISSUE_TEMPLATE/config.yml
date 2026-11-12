@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: How to add a question or a tool
+    url: https://github.com/TonyTech404/driftbench/blob/main/CONTRIBUTING.md
+    about: Read this before opening a pull request.

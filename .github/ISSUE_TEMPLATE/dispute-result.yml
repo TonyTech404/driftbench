@@ -1,0 +1,45 @@
+name: Dispute a result
+description: Think a label is wrong? Tool maintainers are welcome here too.
+title: "Dispute: <question id> / <tool>"
+labels: ["dispute"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every label can be checked. Raw tool output isn't committed, but you can regenerate it with
+        `uv run driftbench run --only <question id> --tools <tool>`, or `driftbench agent` for agent results.
+  - type: input
+    id: question
+    attributes:
+      label: Question id
+      placeholder: "tanstack-prefetch-query"
+    validations:
+      required: true
+  - type: input
+    id: tool
+    attributes:
+      label: Tool or agent setup
+      placeholder: "context7, or agent-deepwiki"
+    validations:
+      required: true
+  - type: dropdown
+    id: results
+    attributes:
+      label: Which results file?
+      options:
+        - Direct tool results (results/YYYY-MM.jsonl)
+        - Agent results (results/YYYY-MM-agent.jsonl)
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What's wrong with the label?
+      description: For example, the tool returned the current API but the pattern missed it, or the question's "current" API is itself out of date.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: The relevant part of the tool's output, and a link to the library's docs or source if the question itself is wrong.

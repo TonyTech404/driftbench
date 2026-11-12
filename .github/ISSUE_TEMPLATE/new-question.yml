@@ -1,0 +1,62 @@
+name: Propose a question
+description: Suggest a real API change to add to the benchmark.
+title: "Question: <library> <old API> → <new API>"
+labels: ["new question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! A question needs a real, recent API change that is confirmed in a primary source.
+        See [CONTRIBUTING.md](https://github.com/TonyTech404/driftbench/blob/main/CONTRIBUTING.md#adding-a-question) for the rules.
+  - type: input
+    id: library
+    attributes:
+      label: Library and repository
+      placeholder: "Polars (pola-rs/polars)"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: First release with the change, and its date
+      placeholder: "2.0.0, 2026-10-06"
+    validations:
+      required: true
+  - type: input
+    id: old_api
+    attributes:
+      label: Outdated API
+      placeholder: "Expr.qcut(quantiles)"
+    validations:
+      required: true
+  - type: input
+    id: new_api
+    attributes:
+      label: Current API
+      placeholder: "Expr.bin_quantiles(...)"
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Primary source
+      description: Release notes, a merged PR, a migration guide, or the library's source code. Not a blog post.
+      placeholder: "https://github.com/pola-rs/polars/pull/29329"
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: The question a developer would ask
+      description: It must not contain the old or the new API.
+      placeholder: "How do I split a Polars column into quantile-based buckets, such as quartiles?"
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: The old API is deprecated or removed in the latest release.
+          required: true
+        - label: I'd like to open the pull request myself.

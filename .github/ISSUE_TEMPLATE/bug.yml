@@ -1,0 +1,23 @@
+name: Bug report
+description: Something in driftbench itself doesn't work.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: The command you ran and the output or error.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: "macOS 26, Python 3.13, uv 0.13, Claude Code 2.1 (for agent mode)"
