@@ -78,10 +78,6 @@ SNIPPETS = {
         "export const runtime = 'edge'",
         "export const runtime = 'nodejs'",
     ),
-    "nextjs-prefetch-allow-runtime": (
-        "export const prefetch = 'force-runtime'",
-        "export const prefetch = 'allow-runtime'",
-    ),
     "playwright-record-video": (
         "const context = await browser.newContext({ videosPath: 'videos/' })",
         "const context = await browser.newContext({ recordVideo: { dir: 'videos/' } })",

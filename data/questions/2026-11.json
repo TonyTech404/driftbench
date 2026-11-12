@@ -177,17 +177,6 @@
     "source_url": "https://github.com/vercel/next.js/pull/93369"
   },
   {
-    "id": "nextjs-prefetch-allow-runtime",
-    "library": "Next.js", "repo": "vercel/next.js", "ecosystem": "js",
-    "version": "16.3.0", "release_date": "2026-08-03", "change": "rename",
-    "old_api": "prefetch 'force-runtime'", "new_api": "prefetch 'allow-runtime'",
-    "old_patterns": ["force-runtime"],
-    "new_patterns": ["allow-runtime"],
-    "question": "How do I opt an App Router segment into runtime prefetching in Next.js?",
-    "question_with_version": "How do I opt an App Router segment into runtime prefetching in Next.js 16.3?",
-    "source_url": "https://github.com/vercel/next.js/pull/94568"
-  },
-  {
     "id": "playwright-record-video",
     "library": "Playwright", "repo": "microsoft/playwright", "ecosystem": "js",
     "version": "1.60.0", "release_date": "2026-05-11", "change": "removal",
