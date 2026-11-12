@@ -18,11 +18,11 @@ BASE = "https://context7.com/api/v2"
 class Context7(Tool):
     name = "context7"
 
-    def __init__(self) -> None:
+    def __init__(self, transport: httpx.BaseTransport | None = None) -> None:
         headers = {"User-Agent": "driftbench"}
         if key := os.environ.get("CONTEXT7_API_KEY"):
             headers["Authorization"] = f"Bearer {key}"
-        self.client = httpx.Client(headers=headers, timeout=60)
+        self.client = httpx.Client(headers=headers, timeout=60, transport=transport)
 
     def ask(self, q: Question, query: str, variant: str) -> ToolResponse:
         def go() -> ToolResponse:
