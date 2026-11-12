@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.env
+# Raw tool output contains other sites' content; regenerate it by running the benchmark.
+results/raw/
+results/*.log
+data/candidates.jsonl
