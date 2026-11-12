@@ -32,6 +32,30 @@ def cmd_candidates(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_run(args: argparse.Namespace) -> int:
+    from .run import run
+
+    return run(
+        questions_path=Path(args.questions),
+        results_path=Path(args.out),
+        tools=args.tools.split(",") if args.tools else None,
+        only=set(args.only.split(",")) if args.only else None,
+        runs=args.runs,
+    )
+
+
+def cmd_report(args: argparse.Namespace) -> int:
+    from .report import build_report
+
+    text = build_report(Path(args.questions), Path(args.results))
+    if args.out:
+        Path(args.out).write_text(text)
+        print(f"wrote {args.out}", file=sys.stderr)
+    else:
+        print(text)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="driftbench", description=__doc__)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -41,6 +65,20 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--since", required=True, help="ISO date, e.g. 2026-06-01")
     c.add_argument("--out", default="data/candidates.jsonl")
     c.set_defaults(func=cmd_candidates)
+
+    r = sub.add_parser("run", help="ask every tool every question and label the answers")
+    r.add_argument("--questions", required=True)
+    r.add_argument("--out", default="results/results.jsonl")
+    r.add_argument("--tools", help="comma-separated tool names (default: all available)")
+    r.add_argument("--only", help="comma-separated question ids")
+    r.add_argument("--runs", type=int, default=1)
+    r.set_defaults(func=cmd_run)
+
+    rep = sub.add_parser("report", help="summarize results as a Markdown report")
+    rep.add_argument("--questions", required=True)
+    rep.add_argument("--results", default="results/results.jsonl")
+    rep.add_argument("--out")
+    rep.set_defaults(func=cmd_report)
 
     args = p.parse_args(argv)
     return args.func(args)
