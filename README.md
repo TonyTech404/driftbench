@@ -1,5 +1,8 @@
 # driftbench
 
+[![CI](https://github.com/TonyTech404/driftbench/actions/workflows/ci.yml/badge.svg)](https://github.com/TonyTech404/driftbench/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **Do AI documentation tools give coding agents the current API, or the outdated one?**
 
 Coding agents lean on documentation tools (Context7, DeepWiki, web search) to look up libraries they
