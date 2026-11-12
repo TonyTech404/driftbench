@@ -22,15 +22,15 @@ VARIANTS = ("plain", "versioned")
 PAUSE_S = 1.0  # be polite to free endpoints
 
 
-def _raw_path(results_path: Path, question_id: str, tool: str, variant: str, run: int) -> Path:
+def raw_path(results_path: Path, question_id: str, tool: str, variant: str, run: int) -> Path:
     return results_path.parent / "raw" / f"{question_id}.{tool}.{variant}.{run}.txt"
 
 
-def _digest(text: str) -> str:
+def digest(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
-def _label_fields(q: Question, text: str, error: str | None) -> dict:
+def label_fields(q: Question, text: str, error: str | None) -> dict:
     labs = label_response(q, text)
     return {
         "label": ERROR if error else labs.code.label,
@@ -41,7 +41,7 @@ def _label_fields(q: Question, text: str, error: str | None) -> dict:
     }
 
 
-def _done(results_path: Path) -> set[tuple[str, str, str, int]]:
+def done_keys(results_path: Path) -> set[tuple[str, str, str, int]]:
     done = set()
     if results_path.exists():
         for line in results_path.read_text().splitlines():
@@ -75,7 +75,7 @@ def run(
             print(f"skipping {n}: {why}", file=sys.stderr)
 
     (results_path.parent / "raw").mkdir(parents=True, exist_ok=True)
-    done = _done(results_path)
+    done = done_keys(results_path)
 
     with results_path.open("a") as out:
         for q in questions:
@@ -85,16 +85,16 @@ def run(
                         if (q.id, tool.name, variant, i) in done:
                             continue
                         resp = tool.ask(q, q.text(variant), variant)
-                        _raw_path(results_path, q.id, tool.name, variant, i).write_text(resp.text)
+                        raw_path(results_path, q.id, tool.name, variant, i).write_text(resp.text)
                         row = {
                             "question_id": q.id,
                             "tool": tool.name,
                             "variant": variant,
                             "run": i,
-                            **_label_fields(q, resp.text, resp.error),
+                            **label_fields(q, resp.text, resp.error),
                             "ms": resp.ms,
                             "chars": len(resp.text),
-                            "sha256_16": _digest(resp.text),
+                            "sha256_16": digest(resp.text),
                             "meta": resp.meta,
                             "error": resp.error,
                             "at": datetime.now(UTC).isoformat(timespec="seconds"),
@@ -119,16 +119,16 @@ def relabel(questions_path: Path, results_path: Path) -> int:
         q = questions.get(r["question_id"])
         if q is None or r["label"] == ERROR:
             continue
-        raw = _raw_path(results_path, r["question_id"], r["tool"], r["variant"], r["run"])
+        raw = raw_path(results_path, r["question_id"], r["tool"], r["variant"], r["run"])
         if not raw.exists():
             skipped += 1
             continue
         text = raw.read_text()
-        if _digest(text) != r["sha256_16"]:
+        if digest(text) != r["sha256_16"]:
             print(f"raw output changed since the run, skipping {raw.name}", file=sys.stderr)
             skipped += 1
             continue
-        new = _label_fields(q, text, None)
+        new = label_fields(q, text, None)
         if any(r.get(k) != v for k, v in new.items()):
             changed += 1
             print(
