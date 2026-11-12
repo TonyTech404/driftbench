@@ -13,12 +13,41 @@ driftbench measures that. Every question comes from a real API change in a 2026 
 against the library's own release notes, PRs or source. Each tool gets the same questions, and
 its answer is labeled by which API its code uses.
 
-> Status: prototype. 24 questions, 9 libraries, 3 tools. See [Roadmap](#roadmap).
+> Status: prototype. 24 questions, 9 libraries, 3 tools, plus an agent baseline. See
+> [Roadmap](#roadmap).
 
 ## Results (November 2026)
 
-24 questions, run once on 2026-11-12, without naming the version. Labels use the code in each
-answer.
+### What an agent writes with each tool
+
+The headline test. Claude Code (Sonnet 5, headless) answers each question with exactly one
+documentation tool over MCP, or none, and the code it writes is labeled. Run once per question
+on 2026-11-12, without naming the version.
+
+| Agent setup | Current | Mixed | Stale | Used its tool | Median time |
+| --- | --- | --- | --- | --- | --- |
+| + DeepWiki | **18/24 (75%)** | 1/24 (4%) | 3/24 (12%) | 24/24 | 19.0 s |
+| + Exa | 16/24 (67%) | 3/24 (12%) | 3/24 (12%) | 24/24 | 11.0 s |
+| + Context7 | 14/24 (58%) | 1/24 (4%) | 7/24 (29%) | 24/24 | 13.8 s |
+| No tool | 2/24 (8%) | 1/24 (4%) | 14/24 (58%) | – | 7.6 s |
+
+What stands out:
+
+- **Any tool helps a lot.** Without one, the agent wrote outdated code for 14 of 24 changes
+  and current code for only 2.
+- **Knowing isn't using.** On Polars `qcut`, the DeepWiki agent noted that `qcut` is
+  deprecated in favor of `bin_quantiles`, then wrote `qcut` anyway.
+- **The agent's own lookup matters.** Asked directly, DeepWiki answers the TanStack prefetch
+  question with the current `queryClient.query()`. The agent asked DeepWiki its own question
+  and wrote the deprecated `prefetchQuery`. All four setups got this one wrong.
+- **Exa does far better through an agent than its raw output suggests,** because the agent
+  picks the current API out of whole pages that show both.
+
+Full per-question table: [results/2026-11-agent.md](results/2026-11-agent.md).
+
+### What each tool returns directly
+
+The same questions sent straight to each tool, labeling the code in what it returns.
 
 | Tool | Current | Mixed | Stale | First snippet stale | Median size | Median latency |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -30,16 +59,12 @@ Naming the library version in the question changed little. DeepWiki went from 22
 current and Context7 stayed at 12. Exa went from 5 to 7, and its first-snippet-stale count
 dropped from 6 to 2.
 
-**Read this carefully before quoting it.** The tools return different things:
+The tools return different things, which is why the agent test above is the fairer comparison:
 
 - **DeepWiki** returns a short answer an LLM wrote from the repository's current source code.
 - **Context7** returns documentation excerpts, often from several versions.
 - **Exa** returns whole web pages, about 20 times more text than DeepWiki, so it often contains
   both the old and the new API.
-
-"Mixed" often means the right answer is in there next to the old one, and an agent may or may
-not pick the right one. Agent mode (see the roadmap) will measure that directly by labeling the
-code a model writes after using each tool.
 
 Full per-question table: [results/2026-11.md](results/2026-11.md).
 
@@ -117,6 +142,19 @@ To look for new changes since a date:
 uv run driftbench candidates --since 2026-11-01
 ```
 
+### Agent mode
+
+Needs [Claude Code](https://docs.claude.com/en/docs/claude-code) installed and logged in, with
+either a Claude subscription or `ANTHROPIC_API_KEY`. Each row records which one was used.
+
+```bash
+uv run driftbench agent --questions data/questions/2026-11.json --out results/2026-11-agent.jsonl
+```
+
+`--setups` picks from `none`, `context7`, `deepwiki` and `exa` (default: all), and `--model`
+is passed to `claude --model` (default: `sonnet`). The full set is 96 runs, about $3 at API
+prices. If a usage limit is reached, the run stops cleanly, and rerunning resumes it.
+
 ## Limitations
 
 - **Small set.** 24 questions is enough to show differences, not to rank tools precisely.
@@ -125,6 +163,8 @@ uv run driftbench candidates --since 2026-11-01
 - **One run per question.** Tool output can vary between runs; use `--runs 2` or more.
 - **The `exa` API adapter has no results yet.** It needs a paid key, so it's tested only
   against simulated responses in Exa's documented format. `exa-mcp` covers Exa in the results.
+- **One agent, one model.** Agent results are Claude Code with Sonnet 5. Other agents and
+  models may use the same tools differently.
 - **Questions picked by hand.** The extractor finds candidates, but a person confirms each change
   and writes the question.
 - **Docs can lag too.** If a library's own docs still show the old API, a tool that copies them
@@ -134,8 +174,9 @@ uv run driftbench candidates --since 2026-11-01
 
 - [ ] Monthly run in GitHub Actions, with results committed
 - [ ] Draft questions from candidates with an LLM, with human review
-- [ ] More tools: Firecrawl, GitHub MCP, plain web search, no-tool baseline
-- [ ] Agent mode: give a model each tool and label the code it writes
+- [x] Agent mode: Claude Code with each tool, plus a no-tool baseline
+- [ ] Agent mode with other agents and models
+- [ ] More tools: Firecrawl, GitHub MCP, plain web search
 - [ ] Public leaderboard page
 
 ## Prior work
