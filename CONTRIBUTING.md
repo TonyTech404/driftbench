@@ -55,9 +55,16 @@ Add a class to [src/driftbench/tools/](src/driftbench/tools/) that subclasses `T
 - `ask(q, query, variant)`: return a `ToolResponse` whose `text` is exactly what an agent would
   read. Wrap the call in `timed()` so latency and errors are recorded.
 
+For an MCP server, use `McpClient` from [tools/mcp.py](src/driftbench/tools/mcp.py) instead of
+writing the protocol again.
+
 Register it in [src/driftbench/tools/\_\_init\_\_.py](src/driftbench/tools/__init__.py). Call
 the tool the way its own MCP server or SDK does, and explain any non-default settings in the
 module docstring.
+
+Add offline tests to [tests/test_tools.py](tests/test_tools.py) that check the request your
+adapter sends and how it reads the service's documented response, and add the tool to
+[tests/test_live.py](tests/test_live.py).
 
 ## Disputing a result
 

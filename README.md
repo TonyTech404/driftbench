@@ -10,26 +10,33 @@ driftbench measures that. Every question comes from a real API change in a 2026 
 against the library's own release notes, PRs or source. Each tool gets the same questions, and
 its answer is labeled by which API its code uses.
 
-> Status: prototype. 24 questions, 9 libraries, 2 tools (plus Exa with an API key). See [Roadmap](#roadmap).
+> Status: prototype. 24 questions, 9 libraries, 3 tools. See [Roadmap](#roadmap).
 
 ## Results (November 2026)
 
-24 questions, run once on 2026-11-12. Labels use the code in each answer.
+24 questions, run once on 2026-11-12, without naming the version. Labels use the code in each
+answer.
 
-| Tool | Current | Mixed | Stale | First snippet stale | Median latency |
-| --- | --- | --- | --- | --- | --- |
-| DeepWiki (MCP) | 22/24 (92%) | 0/24 | 0/24 | 0/24 | 11.3 s |
-| Context7 | 12/24 (50%) | 5/24 (21%) | 3/24 (12%) | 6/24 (25%) | 3.8 s |
+| Tool | Current | Mixed | Stale | First snippet stale | Median size | Median latency |
+| --- | --- | --- | --- | --- | --- | --- |
+| DeepWiki (MCP) | 22/24 (92%) | 0/24 | 0/24 | 0/24 | 1.2k chars | 11.3 s |
+| Context7 | 12/24 (50%) | 5/24 (21%) | 3/24 (12%) | 6/24 (25%) | 4.1k chars | 3.8 s |
+| Exa (MCP) | 5/24 (21%) | 15/24 (62%) | 4/24 (17%) | 6/24 (25%) | 22.9k chars | 0.7 s |
 
-Naming the library version in the question didn't help either tool: Context7 got 12/24 current
-both ways, and DeepWiki went from 22 to 21.
+Naming the library version in the question changed little. DeepWiki went from 22 to 21
+current and Context7 stayed at 12. Exa went from 5 to 7, and its first-snippet-stale count
+dropped from 6 to 2.
 
-**Read this carefully before quoting it.** The two tools return different things. DeepWiki
-returns an answer an LLM wrote from the repository's current source code. Context7 returns
-documentation excerpts, often several versions' worth, which an agent then has to choose
-between. So "mixed" from Context7 often means "the right answer is in there, next to the old
-one", and an agent may or may not pick the right one. Agent mode (see the roadmap) will
-measure that directly by labeling the code a model writes after using each tool.
+**Read this carefully before quoting it.** The tools return different things:
+
+- **DeepWiki** returns a short answer an LLM wrote from the repository's current source code.
+- **Context7** returns documentation excerpts, often from several versions.
+- **Exa** returns whole web pages, about 20 times more text than DeepWiki, so it often contains
+  both the old and the new API.
+
+"Mixed" often means the right answer is in there next to the old one, and an agent may or may
+not pick the right one. Agent mode (see the roadmap) will measure that directly by labeling the
+code a model writes after using each tool.
 
 Full per-question table: [results/2026-11.md](results/2026-11.md).
 
@@ -72,7 +79,8 @@ outdated API, since that's the one an agent is most likely to use.
 | --- | --- | --- |
 | `context7` | Context7 API: resolve the library, then fetch docs for the question (what its MCP server does) | No (optional `CONTEXT7_API_KEY` for higher limits) |
 | `deepwiki` | DeepWiki's public MCP server, `ask_wiki_question` on the library's GitHub repo | No |
-| `exa` | Exa search, `type: fast` with highlights | `EXA_API_KEY` |
+| `exa-mcp` | Exa's hosted MCP server, `web_search_exa` with defaults (how agents usually reach Exa) | No (optional `EXA_API_KEY`) |
+| `exa` | Exa search API, `type: auto` with highlights; records Exa's cost estimate | `EXA_API_KEY` |
 
 Tools without a key are skipped, not failed. Adding a tool means writing one class with an `ask()`
 method in [src/driftbench/tools/](src/driftbench/tools/).
@@ -81,11 +89,14 @@ method in [src/driftbench/tools/](src/driftbench/tools/).
 
 ```bash
 uv sync
-uv run pytest                                   # checks every question's patterns
+uv run pytest                                   # offline: patterns, labeling, tool adapters
 uv run driftbench run --questions data/questions/2026-11.json --out results/2026-11.jsonl
 uv run driftbench report --questions data/questions/2026-11.json \
   --results results/2026-11.jsonl --out results/2026-11.md
 ```
+
+`DRIFTBENCH_LIVE=1 uv run pytest tests/test_live.py` also checks each adapter against the real
+service.
 
 Runs resume where they stopped. After changing how labels work, re-label saved output without
 calling the tools again:
@@ -94,8 +105,8 @@ calling the tools again:
 uv run driftbench relabel --questions data/questions/2026-11.json --results results/2026-11.jsonl
 ```
 
-Raw tool output goes to `results/raw/` and isn't committed,
-because it contains other sites' content.
+Raw tool output goes to `results/raw/` and isn't committed, because it contains other sites'
+content.
 
 To look for new changes since a date:
 
@@ -109,6 +120,8 @@ uv run driftbench candidates --since 2026-11-01
 - **Regex labels.** They're checked against samples, but an unusual answer can still be
   mislabeled. Raw outputs can be regenerated to audit any label.
 - **One run per question.** Tool output can vary between runs; use `--runs 2` or more.
+- **The `exa` API adapter has no results yet.** It needs a paid key, so it's tested only
+  against simulated responses in Exa's documented format. `exa-mcp` covers Exa in the results.
 - **Questions picked by hand.** The extractor finds candidates, but a person confirms each change
   and writes the question.
 - **Docs can lag too.** If a library's own docs still show the old API, a tool that copies them
@@ -118,7 +131,7 @@ uv run driftbench candidates --since 2026-11-01
 
 - [ ] Monthly run in GitHub Actions, with results committed
 - [ ] Draft questions from candidates with an LLM, with human review
-- [ ] More tools: Exa results, Firecrawl, GitHub MCP, plain web search, no-tool baseline
+- [ ] More tools: Firecrawl, GitHub MCP, plain web search, no-tool baseline
 - [ ] Agent mode: give a model each tool and label the code it writes
 - [ ] Public leaderboard page
 
