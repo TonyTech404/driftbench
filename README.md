@@ -13,7 +13,7 @@ driftbench measures that. Every question comes from a real API change in a 2026 
 against the library's own release notes, PRs or source. Each tool gets the same questions, and
 its answer is labeled by which API its code uses.
 
-> Status: prototype. 24 questions, 9 libraries, 3 tools, plus an agent baseline. See
+> Status: prototype. 23 questions, 9 libraries, 3 tools, plus an agent baseline. See
 > [Roadmap](#roadmap).
 
 ## Results (November 2026)
@@ -26,14 +26,14 @@ on 2026-11-12, without naming the version.
 
 | Agent setup | Current | Mixed | Stale | Used its tool | Median time |
 | --- | --- | --- | --- | --- | --- |
-| + DeepWiki | **18/24 (75%)** | 1/24 (4%) | 3/24 (12%) | 24/24 | 19.0 s |
-| + Exa | 16/24 (67%) | 3/24 (12%) | 3/24 (12%) | 24/24 | 11.0 s |
-| + Context7 | 14/24 (58%) | 1/24 (4%) | 7/24 (29%) | 24/24 | 13.8 s |
-| No tool | 2/24 (8%) | 1/24 (4%) | 14/24 (58%) | – | 7.6 s |
+| + DeepWiki | **19/23 (83%)** | 1/23 (4%) | 3/23 (13%) | 23/23 | 19.2 s |
+| + Exa | 17/23 (74%) | 3/23 (13%) | 3/23 (13%) | 23/23 | 10.5 s |
+| + Context7 | 14/23 (61%) | 1/23 (4%) | 7/23 (30%) | 23/23 | 13.7 s |
+| No tool | 2/23 (9%) | 1/23 (4%) | 14/23 (61%) | – | 7.8 s |
 
 What stands out:
 
-- **Any tool helps a lot.** Without one, the agent wrote outdated code for 14 of 24 changes
+- **Any tool helps a lot.** Without one, the agent wrote outdated code for 14 of 23 changes
   and current code for only 2.
 - **Knowing isn't using.** On Polars `qcut`, the DeepWiki agent noted that `qcut` is
   deprecated in favor of `bin_quantiles`, then wrote `qcut` anyway.
@@ -51,12 +51,12 @@ The same questions sent straight to each tool, labeling the code in what it retu
 
 | Tool | Current | Mixed | Stale | First snippet stale | Median size | Median latency |
 | --- | --- | --- | --- | --- | --- | --- |
-| DeepWiki (MCP) | 22/24 (92%) | 0/24 | 0/24 | 0/24 | 1.2k chars | 11.3 s |
-| Context7 | 12/24 (50%) | 5/24 (21%) | 3/24 (12%) | 6/24 (25%) | 4.1k chars | 3.8 s |
-| Exa (MCP) | 5/24 (21%) | 15/24 (62%) | 4/24 (17%) | 6/24 (25%) | 22.9k chars | 0.7 s |
+| DeepWiki (MCP) | 22/23 (96%) | 0/23 | 0/23 | 0/23 | 1.2k chars | 11.3 s |
+| Context7 | 12/23 (52%) | 5/23 (22%) | 3/23 (13%) | 6/23 (26%) | 3.8k chars | 3.8 s |
+| Exa (MCP) | 4/23 (17%) | 15/23 (65%) | 4/23 (17%) | 6/23 (26%) | 22.8k chars | 0.7 s |
 
 Naming the library version in the question changed little. DeepWiki went from 22 to 21
-current and Context7 stayed at 12. Exa went from 5 to 7, and its first-snippet-stale count
+current and Context7 stayed at 12. Exa went from 4 to 7, and its first-snippet-stale count
 dropped from 6 to 2.
 
 The tools return different things, which is why the agent test above is the fairer comparison:
@@ -67,6 +67,16 @@ The tools return different things, which is why the agent test above is the fair
   both the old and the new API.
 
 Full per-question table: [results/2026-11.md](results/2026-11.md).
+
+### Corrections
+
+- **2026-11-12.** Removed `nextjs-prefetch-allow-runtime`. The `force-runtime` → `allow-runtime`
+  rename only existed in pre-release builds; no stable Next.js release accepts either value,
+  so the question broke its own rules. Also fixed a labeling bug: a code line such as
+  `runtime = 'nodejs' // or 'edge' (deprecated)` was ignored entirely, instead of counting the
+  current API it recommends. Agent results moved from 18/24 to 19/23 current with DeepWiki,
+  16/24 to 17/23 with Exa, and 14/24 to 14/23 with Context7. Found while answering a reader's
+  question.
 
 ## How it works
 
@@ -157,7 +167,7 @@ prices. If a usage limit is reached, the run stops cleanly, and rerunning resume
 
 ## Limitations
 
-- **Small set.** 24 questions is enough to show differences, not to rank tools precisely.
+- **Small set.** 23 questions is enough to show differences, not to rank tools precisely.
 - **Regex labels.** They're checked against samples, but an unusual answer can still be
   mislabeled. Raw outputs can be regenerated to audit any label.
 - **One run per question.** Tool output can vary between runs; use `--runs 2` or more.
